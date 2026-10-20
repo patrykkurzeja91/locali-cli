@@ -11,7 +11,7 @@ import {
   usesNamespaces,
   flattenJson,
   validateLocaleValue,
-} from '@mini-tms/core';
+} from './core';
 
 /**
  * mini-tms CLI — push / pull / status / validate (docs/SPEC_SYNC_CLI.md §4).
