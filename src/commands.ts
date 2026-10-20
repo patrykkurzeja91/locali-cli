@@ -58,6 +58,8 @@ export function parseArgs(argv: string[]): ParsedArgs {
       else if (argv[i + 1] !== undefined && !argv[i + 1].startsWith('--') && ['config', 'lang', 'namespace'].includes(name)) {
         flags[name] = argv[++i];
       } else flags[name] = true;
+    } else if (arg.startsWith('-') && arg.length > 1) {
+      flags[arg.slice(1)] = true;
     } else if (!command) {
       command = arg;
     }
@@ -394,6 +396,14 @@ async function commandValidate(ctx: CliContext, flags: ParsedArgs['flags']): Pro
 
 export async function runCli(argv: string[], ctx: CliContext): Promise<number> {
   const { command, flags } = parseArgs(argv);
+  if (flags.version || flags.v || command === 'version') {
+    ctx.out('0.1.0');
+    return EXIT.OK;
+  }
+  if (flags.help || flags.h || command === 'help') {
+    ctx.out(HELP);
+    return EXIT.OK;
+  }
   try {
     switch (command) {
       case 'push':
@@ -405,9 +415,8 @@ export async function runCli(argv: string[], ctx: CliContext): Promise<number> {
       case 'validate':
         return await commandValidate(ctx, flags);
       case undefined:
-      case 'help':
         ctx.out(HELP);
-        return command ? EXIT.OK : EXIT.CONFIG;
+        return EXIT.CONFIG;
       default:
         ctx.err(`Nieznane polecenie: ${command}\n\n${HELP}`);
         return EXIT.CONFIG;
