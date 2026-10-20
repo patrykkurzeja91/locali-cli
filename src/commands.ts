@@ -410,7 +410,7 @@ async function commandValidate(ctx: CliContext, flags: ParsedArgs['flags']): Pro
 export async function runCli(argv: string[], ctx: CliContext): Promise<number> {
   const { command, flags } = parseArgs(argv);
   if (flags.version || flags.v || command === 'version') {
-    ctx.out('0.1.0');
+    ctx.out('0.1.1');
     return EXIT.OK;
   }
   if (flags.help || flags.h || command === 'help') {
