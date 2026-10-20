@@ -1,0 +1,27 @@
+{
+  "name": "mini-tms",
+  "version": "0.1.0",
+  "description": "Mini-TMS CLI — push, pull, status, validate for translation files",
+  "type": "module",
+  "bin": {
+    "mini-tms": "./dist/mini-tms.mjs"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "esbuild src/mini-tms.ts --bundle --platform=node --format=esm --target=node20 --outfile=dist/mini-tms.mjs",
+    "test": "node --import tsx --test 'src/**/*.test.ts'",
+    "lint": "tsc --noEmit",
+    "prepare": "npm run build"
+  },
+  "dependencies": {
+    "@mini-tms/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "esbuild": "^0.25.0",
+    "tsx": "^4.21.0",
+    "typescript": "^7.0.2"
+  }
+}
