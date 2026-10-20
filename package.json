@@ -1,17 +1,19 @@
 {
-  "name": "mini-tms",
+  "name": "locali",
   "version": "0.1.0",
-  "description": "Mini-TMS CLI — push, pull, status, validate for translation files",
+  "description": "Locali CLI — push, pull, status, validate for translation files",
   "type": "module",
   "license": "MIT",
   "bin": {
-    "mini-tms": "./dist/mini-tms.mjs"
+    "locali": "./dist/locali.mjs",
+    "mini-tms": "./dist/locali.mjs"
   },
   "files": [
     "dist",
     "README.md"
   ],
   "keywords": [
+    "locali",
     "i18n",
     "localization",
     "tms",
@@ -26,7 +28,7 @@
     "directory": "packages/cli"
   },
   "scripts": {
-    "build": "esbuild src/mini-tms.ts --bundle --platform=node --format=esm --target=node20 --outfile=dist/mini-tms.mjs",
+    "build": "esbuild src/locali.ts --bundle --platform=node --format=esm --target=node20 --outfile=dist/locali.mjs",
     "test": "node --import tsx --test 'src/**/*.test.ts'",
     "lint": "tsc --noEmit",
     "prepublishOnly": "npm run build"

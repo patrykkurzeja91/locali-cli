@@ -1,8 +1,8 @@
-# mini-tms
+# locali
 
-> Lekkie, niezależne narzędzie CLI do synchronizacji plików tłumaczeń (`i18n`) pomiędzy kodem aplikacji a serwerem **Mini-TMS**. Działa analogicznie do Crowdin CLI / Lokalise CLI, pobierając teksty w procesach CI/CD lub wysyłając nowe klucze z lokalnego środowiska deweloperskiego.
+> Lekkie, niezależne narzędzie CLI do synchronizacji plików tłumaczeń (`i18n`) pomiędzy kodem aplikacji a panelem **Locali**. Działa analogicznie do Crowdin CLI / Lokalise CLI, pobierając teksty w procesach CI/CD lub wysyłając nowe klucze z lokalnego środowiska deweloperskiego.
 
-Zero zewnętrznych zależności w runtime — wbudowany silnik serializacji, parsowania i walidacji tokenów.
+Zero zewnętrznych zależności w runtime — wbudowany silnik serializacji, parsowania i walidacji tokenów interpolacji.
 
 ---
 
@@ -12,39 +12,40 @@ Zero zewnętrznych zależności w runtime — wbudowany silnik serializacji, par
 Nie musisz nawet instalować paczki na stałe — wystarczy `npx`:
 
 ```bash
-npx --yes mini-tms pull
+npx --yes locali pull
 ```
 
 Zmienne środowiskowe:
-- `MINI_TMS_API_URL` — adres URL serwera API (np. `https://translations-api.devwizards.pl`)
-- `MINI_TMS_TOKEN` — token API z uprawnieniem do odczytu (`mtms_...`)
+- `LOCALI_API_URL` — adres URL serwera API (np. `https://translations-api.devwizards.pl`, alternatywnie `MINI_TMS_API_URL`)
+- `LOCALI_TOKEN` — token API z uprawnieniem do odczytu (`locali_...` lub `mtms_...`)
 
 ### 2. Instalacja w projekcie jako zależność developerska
 
 ```bash
-pnpm add -D mini-tms
+pnpm add -D locali
 # lub
-npm install --save-dev mini-tms
+npm install --save-dev locali
 # lub
-yarn add -D mini-tms
+yarn add -D locali
 ```
 
 Dodaj skrót do `package.json`:
 ```json
 {
   "scripts": {
-    "i18n:pull": "mini-tms pull",
-    "i18n:push": "mini-tms push",
-    "i18n:status": "mini-tms status"
+    "i18n:pull": "locali pull",
+    "i18n:push": "locali push",
+    "i18n:status": "locali status",
+    "i18n:validate": "locali validate"
   }
 }
 ```
 
 ---
 
-## ⚙️ Konfiguracja (`i18n.config.json`)
+## ⚙️ Konfiguracja (`locali.config.json` lub `i18n.config.json`)
 
-W katalogu głównym projektu utwórz plik `i18n.config.json`:
+W katalogu głównym projektu utwórz plik `locali.config.json`:
 
 ```json
 {
@@ -54,12 +55,13 @@ W katalogu głównym projektu utwórz plik `i18n.config.json`:
   "localesDir": "src/locales",
   "fileStructure": "{localesDir}/{lang}.json",
   "fileFormat": "nested",
-  "defaultNamespace": "common"
+  "defaultNamespace": "common",
+  "apiBaseUrl": "https://translations-api.devwizards.pl"
 }
 ```
 
 ### Opcje konfiguracji:
-- `projectId` — identyfikator slug projektu w Mini-TMS.
+- `projectId` — identyfikator slug projektu w Locali.
 - `sourceLanguage` — kod języka źródłowego (np. `pl`).
 - `targetLanguages` — tablica kodów języków docelowych.
 - `localesDir` — katalog z plikami tłumaczeń.
@@ -67,49 +69,44 @@ W katalogu głównym projektu utwórz plik `i18n.config.json`:
   - `{localesDir}/{lang}.json` (płaski układ per język, np. `src/locales/pl.json`)
   - `{localesDir}/{lang}/{namespace}.json` (układ z podziałem na przestrzenie nazw, np. `src/locales/pl/common.json`)
 - `fileFormat` — `nested` (zagnieżdżone obiekty JSON) lub `flat` (klucze rozdzielane kropkami).
+- `apiBaseUrl` — opcjonalny adres URL API (jeśli nie podano w zmiennej środowiskowej).
 
 ---
 
 ## 🛠️ Dostępne polecenia
 
-### `mini-tms pull`
+### `locali pull`
 Pobiera najnowsze opublikowane tłumaczenia z serwera i zapisuje je w lokalnych plikach JSON.
 ```bash
-mini-tms pull
-mini-tms pull --lang en,fr        # Pobierz tylko wybrane języki
-mini-tms pull --dry-run          # Podgląd zmian bez modyfikacji dysku
+locali pull
+locali pull --lang en,fr        # Pobierz tylko wybrane języki
+locali pull --dry-run          # Podgląd zmian bez modyfikacji dysku
 ```
 
-### `mini-tms push`
-Skanuje lokalne pliki języka źródłowego i wysyła nowe klucze do serwera Mini-TMS.
+### `locali push`
+Skanuje lokalne pliki języka źródłowego i wysyła nowe klucze do serwera.
 ```bash
-mini-tms push
-mini-tms push --dry-run          # Podgląd wykrytych nowych kluczy
-mini-tms push --update-source    # Zaktualizuj także istniejące teksty źródłowe
+locali push
+locali push --dry-run          # Podgląd wykrytych nowych kluczy
+locali push --update-source    # Zaktualizuj także istniejące teksty źródłowe
 ```
 
-### `mini-tms status`
+### `locali status`
 Porównuje lokalne pliki z bazą na serwerze i raportuje brakujące teksty oraz rozbieżności.
 ```bash
-mini-tms status
+locali status
 ```
 
-### `mini-tms validate`
+### `locali validate`
 Sprawdza poprawność składni plików JSON, formatu kluczy oraz integralności tokenów interpolacji.
 ```bash
-mini-tms validate
+locali validate
 ```
 
 ---
 
-## 🔒 Bezpieczeństwo i tokeny API
-
-Tokeny API generujesz w panelu administracyjnym Mini-TMS w zakładce **Ustawienia projektu -> Tokeny API & CI/CD**:
-- Dla procesów budowania w **CI/CD** wybierz uprawnienie **`read (Tylko odczyt)`** — taki token nie pozwala na modyfikację ani usunięcie żadnych danych na serwerze.
-- W repozytorium zapisz token jako tajną zmienną środowiskową (np. `MINI_TMS_TOKEN` w **GitHub Secrets**).
-
----
-
-## 📄 Licencja
-
-MIT © Patryk Kurzeja
+## 🔄 Wsteczna kompatybilność
+Jeśli korzystałeś wcześniej z `mini-tms`, narzędzie zachowuje pełną kompatybilność:
+- Polecenie `mini-tms` jest zachowane jako alias dla `locali`
+- Zmienne środowiskowe `MINI_TMS_TOKEN` i `MINI_TMS_API_URL` są automatycznie obsługiwane jako fallback
+- Plik `i18n.config.json` jest automatycznie wykrywany, jeśli brak `locali.config.json`

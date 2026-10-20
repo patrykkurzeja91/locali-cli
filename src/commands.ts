@@ -33,17 +33,17 @@ interface ParsedArgs {
   flags: Record<string, string | boolean>;
 }
 
-const HELP = `mini-tms — synchronizacja plików tłumaczeń z Mini-TMS
+const HELP = `locali — synchronizacja plików tłumaczeń z panelem Locali
 
 Użycie:
-  mini-tms push      [--config path] [--dry-run] [--update-source] [--namespace ns]
-  mini-tms pull      [--config path] [--dry-run] [--lang pl,de]
-  mini-tms status    [--config path]
-  mini-tms validate  [--config path]
+  locali push      [--config path] [--dry-run] [--update-source] [--namespace ns]
+  locali pull      [--config path] [--dry-run] [--lang pl,de]
+  locali status    [--config path]
+  locali validate  [--config path]
 
 Zmienne środowiskowe:
-  MINI_TMS_TOKEN     token API (mtms_...) — wymagany dla push / pull / status
-  MINI_TMS_API_URL   nadpisuje apiBaseUrl z i18n.config.json
+  LOCALI_TOKEN       token API (locali_... lub mtms_...) — wymagany dla push / pull / status
+  LOCALI_API_URL     nadpisuje apiBaseUrl z locali.config.json (lub i18n.config.json)
 
 Kody wyjścia: 0 OK · 1 błędy walidacji / konflikty · 2 błąd konfiguracji · 3 błąd sieci / autoryzacji`;
 
@@ -80,7 +80,20 @@ interface LoadedConfig {
 }
 
 async function loadConfig(ctx: CliContext, flags: ParsedArgs['flags']): Promise<LoadedConfig> {
-  const configPath = path.resolve(ctx.cwd, typeof flags.config === 'string' ? flags.config : 'i18n.config.json');
+  let configPath: string;
+  if (typeof flags.config === 'string') {
+    configPath = path.resolve(ctx.cwd, flags.config);
+  } else {
+    const localiPath = path.resolve(ctx.cwd, 'locali.config.json');
+    let hasLocali = false;
+    try {
+      await fs.access(localiPath);
+      hasLocali = true;
+    } catch {
+      hasLocali = false;
+    }
+    configPath = hasLocali ? localiPath : path.resolve(ctx.cwd, 'i18n.config.json');
+  }
   let raw: string;
   try {
     raw = await fs.readFile(configPath, 'utf8');
@@ -95,7 +108,7 @@ async function loadConfig(ctx: CliContext, flags: ParsedArgs['flags']): Promise<
   }
   const { config, errors, apiBaseUrl } = parseProjectConfig(json);
   if (!config) throw new CliError(`Błędy w ${path.basename(configPath)}:\n  - ${errors.join('\n  - ')}`, EXIT.CONFIG);
-  return { project: config, baseDir: path.dirname(configPath), apiBaseUrl: ctx.env.MINI_TMS_API_URL || apiBaseUrl };
+  return { project: config, baseDir: path.dirname(configPath), apiBaseUrl: ctx.env.LOCALI_API_URL || ctx.env.MINI_TMS_API_URL || apiBaseUrl };
 }
 
 /** Resolves a project-relative locale path and refuses anything escaping the project directory */
@@ -158,9 +171,9 @@ async function discoverLocaleFiles(loaded: LoadedConfig, lang: LocaleCode): Prom
 }
 
 async function api<T>(ctx: CliContext, loaded: LoadedConfig, method: 'GET' | 'POST', query: Record<string, string>, body?: unknown): Promise<T> {
-  if (!loaded.apiBaseUrl) throw new CliError('Brak adresu API: ustaw apiBaseUrl w i18n.config.json lub MINI_TMS_API_URL.', EXIT.CONFIG);
-  const token = ctx.env.MINI_TMS_TOKEN;
-  if (!token) throw new CliError('Brak tokena: ustaw zmienną środowiskową MINI_TMS_TOKEN.', EXIT.CONFIG);
+  if (!loaded.apiBaseUrl) throw new CliError('Brak adresu API: ustaw apiBaseUrl w pliku konfiguracyjnym lub zmienną LOCALI_API_URL.', EXIT.CONFIG);
+  const token = ctx.env.LOCALI_TOKEN || ctx.env.MINI_TMS_TOKEN;
+  if (!token) throw new CliError('Brak tokena: ustaw zmienną środowiskową LOCALI_TOKEN (lub MINI_TMS_TOKEN).', EXIT.CONFIG);
 
   const url = new URL(loaded.apiBaseUrl.replace(/\/+$/, '') + '/sync.php');
   url.searchParams.set('project', loaded.project.projectId);
